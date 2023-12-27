@@ -8,7 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Scanner;
 
 public class Server {
@@ -44,22 +43,25 @@ public class Server {
                             switch (firstChar) {
                                 case '@' -> {
                                     try {
-                                        int number = Integer.parseInt(String.valueOf(firstChar));
-                                        String message = clientInput.substring(2);
-
-                                    } catch (NumberFormatException e) {
-
+                                        long number = Long.parseLong(String.valueOf(clientInput.charAt(1)));
+                                        String targetMessage = clientInput.substring(2);
+                                        sendMessageToSocket(number, targetMessage);
+                                    } catch (NumberFormatException ignored) {
                                     }
                                 }
                                 case 'q' -> {
                                     clients.remove(clientId);
                                     clients.values().forEach(it -> it.getOutput().println("Клиент[" + clientId + "] отключился"));
                                 }
+                                default -> {
+                                    for (long receiver : clients.keySet()) {
+                                        String targetMessage = clientInput.substring(1);
+                                        if (receiver != (wrapper.getId())) {
+                                            sendMessageToSocket(receiver, targetMessage);
+                                        }
+                                    }
+                                }
                             }
-                            // формат сообщения: "цифра сообщение"
-                            long destinationId = Long.parseLong(clientInput.substring(0, 1));
-                            SocketWrapper destination = clients.get(destinationId);
-                            destination.getOutput().println(clientInput);
                         }
                     }
                 }).start();
@@ -67,6 +69,10 @@ public class Server {
         }
     }
 
+    private static void sendMessageToSocket(long destinationId, String targetMessage) {
+        SocketWrapper destination = clients.get(destinationId);
+        destination.getOutput().println(targetMessage);
+    }
 }
 
 @Getter
